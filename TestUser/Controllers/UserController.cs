@@ -22,6 +22,7 @@ namespace TestUser.Controllers
             _context = context;
         }
 
+        //Get all the users
         [HttpGet]
         public IEnumerable<NewUser> GetUsers()
         {
@@ -42,6 +43,22 @@ namespace TestUser.Controllers
             return newUserList;
         }
 
+
+        //Get the specific user
+        [HttpGet("{id}")]
+        public async Task<ActionResult<User>> UserDetails(int id)
+        {
+            var userList = _context.Users.Find(id);
+
+            if (!UserExist(id))
+            {
+                return NotFound();
+            }
+
+            return userList;
+        }
+
+        //Add the new user
         [HttpPost]
         public async Task<ActionResult<User>> AddUser(User user)
         {
@@ -51,15 +68,16 @@ namespace TestUser.Controllers
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 DateOfBirth = user.DateOfBirth,
-                IsActive = user.IsActive,
-                IsDeleted = user.IsDeleted
+                IsActive = true,
+                IsDeleted = false
             });
 
-            _context.SaveChanges();
+             _context.SaveChanges();
 
             return Content($"Successfuly save user with id: {user.Id}");
         }
 
+        //Update the data of the user
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateUser(int id, User user)
         {
@@ -92,21 +110,27 @@ namespace TestUser.Controllers
             return Content($"Successfuly updated user with id: {user.Id}");
         }
 
+     
         [HttpDelete("{id}")]
         public async Task<ActionResult<User>> DeleteUser(int id)
         {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null)
+            var userToDelete = await _context.Users.FindAsync(id);
+            if (userToDelete == null)
             {
                 return NotFound();
             }
 
-            _context.Users.Remove(user);
+            userToDelete.IsActive = false;
+            userToDelete.IsDeleted = true;
+
+            //_context.Users.Remove(user);
             await _context.SaveChangesAsync();
 
-            return Content($"Successfuly deleted user with id: {user.Id}");
+            //return userToDelete;
+            return Content($"Successfuly deleted user with id: {id}");
         }
 
+        //Validate if user exist
         private bool UserExist(long id) =>
          _context.Users.Any(e => e.Id == id);
         
