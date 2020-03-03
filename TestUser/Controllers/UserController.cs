@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TestUser.Model;
 using TestUser.TestDBContext;
+using TestUser.Validator;
 
 namespace TestUser.Controllers
 {
@@ -62,17 +63,26 @@ namespace TestUser.Controllers
         [HttpPost]
         public async Task<ActionResult<User>> AddUser(User user)
         {
-            _context.Users.Add(new User
-            {
-                Id = user.Id,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                DateOfBirth = user.DateOfBirth,
-                IsActive = true,
-                IsDeleted = false
-            });
+            //DataValidator validations = new DataValidator();
+            //validations.Validate(user);
 
-             _context.SaveChanges();
+            if (UserExist(user.Id))
+            {
+                return Content("Id already exist");
+            }
+            else {
+                _context.Users.Add(new User
+                {
+                    Id = user.Id,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    DateOfBirth = user.DateOfBirth,
+                    IsActive = true,
+                    IsDeleted = false
+                });
+
+                _context.SaveChanges();
+            }            
 
             return Content($"Successfuly save user with id: {user.Id}");
         }
@@ -118,6 +128,10 @@ namespace TestUser.Controllers
             if (userToDelete == null)
             {
                 return NotFound();
+            }
+            if (userToDelete.IsDeleted)
+            {
+                return Content("User is already deleted");
             }
 
             userToDelete.IsActive = false;

@@ -15,5 +15,6 @@ namespace TestUser.TestDBContext
         }
 
         public DbSet<User> Users { get; set; }
+        public DbSet<Address> Addresses { get; set; }
     }
 }

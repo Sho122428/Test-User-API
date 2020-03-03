@@ -10,10 +10,10 @@ namespace TestUser.Validator
     public class DataValidator : AbstractValidator<User>
     {
         public DataValidator() {
-            RuleFor(a => a.Id).NotEmpty();
+            RuleFor(a => a.Id).InclusiveBetween(1, 10);
             RuleFor(a => a.FirstName).NotEmpty().WithMessage("Please specify a first name");
             RuleFor(a => a.LastName).NotEmpty().WithMessage("Please specify a last name");
             RuleFor(a => a.DateOfBirth).NotEmpty().WithMessage("Please specify a birthday");
-        }
+        }        
     }
 }

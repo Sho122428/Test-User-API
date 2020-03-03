@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using FluentValidation.AspNetCore;
+using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -37,7 +38,9 @@ namespace TestUser
                     opt.RegisterValidatorsFromAssembly(Assembly.GetExecutingAssembly());
                 });
 
-            services.AddControllers();
+            //services.AddTransient(inotifiermediatorservice);
+
+            services.AddControllers();         
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
