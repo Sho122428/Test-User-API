@@ -33,12 +33,21 @@ namespace TestUser.Controllers
             var query = new GetAllUserQuery();
             var result = await _mediator.Send(query);
 
+            if (result.Count == 0)
+            {
+                return Content("No users found");
+            }
+
             return Ok(result);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<User>> UserDetails(int id)
         {
+            if (!UserExist(id))
+            {
+                return Content($"User with id no. {id} not found");
+            }
             var query = new GetUserDetailQuery(id);
             var result = await _mediator.Send(query);            
 
@@ -57,20 +66,30 @@ namespace TestUser.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateUser(int id, User user)
         {
+            if (!UserExist(id))
+            {
+                return Content($"User with id no. {id} not found");
+            }
+
             var query = new UpdateUserQuery(user);
             var result = await _mediator.Send(query);
 
-            return Content($"Successfuly updated user with id: {user.Id}");
+            return Content($"Successfuly updated user with id no. {user.Id}");
         }
 
 
         [HttpDelete("{id}")]
         public async Task<ActionResult<User>> DeleteUser(int id)
         {
+            if (!UserExist(id))
+            {
+                return Content($"User with id no. {id} not found");
+            }
+
             var query = new DeleteUserQuery(id);
             var result = await _mediator.Send(query);
 
-            return Content($"Successfuly deleted user with id: {id}");
+            return Content($"Successfuly deleted user with id no. {id}");
         }
 
 
@@ -197,7 +216,7 @@ namespace TestUser.Controllers
         private bool UserExist(long id) =>
          _context.Users.Any(e => e.Id == id);
         
-            public ActionResult Index()
+        public ActionResult Index()
         {
             return View();
         }
