@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using TestUser.MediatR.Queries;
 using TestUser.Model;
 using TestUser.TestDBContext;
 using TestUser.Validator;
@@ -17,132 +19,179 @@ namespace TestUser.Controllers
     {        
         // GET: User
         private UserDBContext _context;
+        private readonly IMediator _mediator;
 
-        public UserController(UserDBContext context)
+        public UserController(UserDBContext context,IMediator mediator)
         {
             _context = context;
+            _mediator = mediator;
         }
 
         //Get all the users
         [HttpGet]
-        public IEnumerable<NewUser> GetUsers()
-        {
-            var userList = _context.Users;
-            List<NewUser> newUserList = new List<NewUser>();           
+        public async Task<IActionResult> GetAllUsers() {
+            var query = new GetAllUserQuery();
+            var result = await _mediator.Send(query);
 
-            foreach (var dtl in userList)
-            {
-                NewUser user = new NewUser();
-
-                user.Id = dtl.Id;
-                user.FirstName = dtl.FirstName;
-                user.LastName = dtl.LastName;
-
-                newUserList.Add(user);
-            }
-
-            return newUserList;
+            return Ok(result);
         }
 
-
-        //Get the specific user
         [HttpGet("{id}")]
         public async Task<ActionResult<User>> UserDetails(int id)
         {
-            var userList = _context.Users.Find(id);
+            var query = new GetUserDetailQuery(id);
+            var result = await _mediator.Send(query);            
 
-            if (!UserExist(id))
-            {
-                return NotFound();
-            }
-
-            return userList;
+            return Ok(result); 
         }
 
-        //Add the new user
         [HttpPost]
         public async Task<ActionResult<User>> AddUser(User user)
         {
-            //DataValidator validations = new DataValidator();
-            //validations.Validate(user);
+            var query = new PostUserQuery(user);
+            var result = await _mediator.Send(query);
 
-            if (UserExist(user.Id))
-            {
-                return Content("Id already exist");
-            }
-            else {
-                _context.Users.Add(new User
-                {
-                    Id = user.Id,
-                    FirstName = user.FirstName,
-                    LastName = user.LastName,
-                    DateOfBirth = user.DateOfBirth,
-                    IsActive = true,
-                    IsDeleted = false
-                });
-
-                _context.SaveChanges();
-            }            
-
-            return Content($"Successfuly save user with id: {user.Id}");
+            return Content($"Successfuly save user with id: {result.Id}");
         }
 
-        //Update the data of the user
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateUser(int id, User user)
         {
-            if (id != user.Id)
-            {
-                return BadRequest();
-            }
-
-            var userToUpdate = await _context.Users.FindAsync(id);
-            if (userToUpdate == null)
-            {
-                return NotFound();
-            }
-
-            userToUpdate.FirstName = user.FirstName;
-            userToUpdate.LastName = user.LastName;
-            userToUpdate.DateOfBirth = user.DateOfBirth;
-            userToUpdate.IsActive = user.IsActive;
-            userToUpdate.IsDeleted = user.IsDeleted;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException) when (!UserExist(id))
-            {
-                return NotFound();
-            }
+            var query = new UpdateUserQuery(user);
+            var result = await _mediator.Send(query);
 
             return Content($"Successfuly updated user with id: {user.Id}");
         }
 
-     
+
         [HttpDelete("{id}")]
         public async Task<ActionResult<User>> DeleteUser(int id)
         {
-            var userToDelete = await _context.Users.FindAsync(id);
-            if (userToDelete == null)
-            {
-                return NotFound();
-            }
-            if (userToDelete.IsDeleted)
-            {
-                return Content("User is already deleted");
-            }
+            var query = new DeleteUserQuery(id);
+            var result = await _mediator.Send(query);
 
-            userToDelete.IsActive = false;
-            userToDelete.IsDeleted = true;
-
-            //_context.Users.Remove(user);
-            await _context.SaveChangesAsync();
-
-            //return userToDelete;
             return Content($"Successfuly deleted user with id: {id}");
         }
+
+
+        //public IEnumerable<NewUser> GetUsers()
+        //{
+        //    var userList = _context.Users;
+        //    List<NewUser> newUserList = new List<NewUser>();           
+
+        //    foreach (var dtl in userList)
+        //    {
+        //        NewUser user = new NewUser();
+
+        //        user.Id = dtl.Id;
+        //        user.FirstName = dtl.FirstName;
+        //        user.LastName = dtl.LastName;
+
+        //        newUserList.Add(user);
+        //    }
+
+        //    return newUserList;
+        //}
+
+
+        //Get the specific user
+        //[HttpGet("{id}")]
+        //public async Task<ActionResult<User>> UserDetails(int id)
+        //{
+        //    var userList = _context.Users.Find(id);
+
+        //    if (!UserExist(id))
+        //    {
+        //        return NotFound();
+        //    }
+
+        //    return userList;
+        //}
+
+        //Add the new user
+        //[HttpPost]
+        //public async Task<ActionResult<User>> AddUser(User user)
+        //{
+        //    //DataValidator validations = new DataValidator();
+        //    //validations.Validate(user);
+
+        //    if (UserExist(user.Id))
+        //    {
+        //        return Content("Id already exist");
+        //    }
+        //    else {
+        //        _context.Users.Add(new User
+        //        {
+        //            Id = user.Id,
+        //            FirstName = user.FirstName,
+        //            LastName = user.LastName,
+        //            DateOfBirth = user.DateOfBirth,
+        //            IsActive = true,
+        //            IsDeleted = false
+        //        });
+
+        //        _context.SaveChanges();
+        //    }            
+
+        //    return Content($"Successfuly save user with id: {user.Id}");
+        //}
+
+        //Update the data of the user
+        //[HttpPut("{id}")]
+        //public async Task<IActionResult> UpdateUser(int id, User user)
+        //{
+        //    if (id != user.Id)
+        //    {
+        //        return BadRequest();
+        //    }
+
+        //    var userToUpdate = await _context.Users.FindAsync(id);
+        //    if (userToUpdate == null)
+        //    {
+        //        return NotFound();
+        //    }
+
+        //    userToUpdate.FirstName = user.FirstName;
+        //    userToUpdate.LastName = user.LastName;
+        //    userToUpdate.DateOfBirth = user.DateOfBirth;
+        //    userToUpdate.IsActive = user.IsActive;
+        //    userToUpdate.IsDeleted = user.IsDeleted;
+
+        //    try
+        //    {
+        //        await _context.SaveChangesAsync();
+        //    }
+        //    catch (DbUpdateConcurrencyException) when (!UserExist(id))
+        //    {
+        //        return NotFound();
+        //    }
+
+        //    return Content($"Successfuly updated user with id: {user.Id}");
+        //}
+
+
+        //[HttpDelete("{id}")]
+        //public async Task<ActionResult<User>> DeleteUser(int id)
+        //{
+        //    var userToDelete = await _context.Users.FindAsync(id);
+        //    if (userToDelete == null)
+        //    {
+        //        return NotFound();
+        //    }
+        //    if (userToDelete.IsDeleted)
+        //    {
+        //        return Content("User is already deleted");
+        //    }
+
+        //    userToDelete.IsActive = false;
+        //    userToDelete.IsDeleted = true;
+
+        //    //_context.Users.Remove(user);
+        //    await _context.SaveChangesAsync();
+
+        //    //return userToDelete;
+        //    return Content($"Successfuly deleted user with id: {id}");
+        //}
 
         //Validate if user exist
         private bool UserExist(long id) =>
@@ -227,27 +276,5 @@ namespace TestUser.Controllers
         //        return View();
         //    }
         //}
-    }
-
-    public class NewUser
-    {
-        int id;
-        string firstName;
-        string lastName;
-        public int Id
-        {
-            get { return id; }
-            set { id = value; }
-        }
-        public string FirstName
-        {
-            get { return firstName; }
-            set { firstName = value; }
-        }
-        public string LastName
-        {
-            get { return lastName; }
-            set { lastName = value; }
-        }
-    }
+    }    
 }

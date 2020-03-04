@@ -38,6 +38,7 @@ namespace TestUser
                     opt.RegisterValidatorsFromAssembly(Assembly.GetExecutingAssembly());
                 });
 
+            services.AddMediatR(typeof(Startup));
             //services.AddTransient(inotifiermediatorservice);
 
             services.AddControllers();         
